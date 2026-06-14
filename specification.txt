@@ -1,0 +1,428 @@
+# Feature Specification: E-Commerce Order Management 
+
+## Overview
+A marketplace platform requires a reliable backend capable of managing the complete lifecycle of customer orders, from creation to payment processing.
+The solution must be decomposed into multiple bounded contexts following a microservices architecture. However, only the Order Service will be implemented. All external services must be represented through HTTP integrations against WireMock.
+
+The platform must guarantee:
+
+* Consistent order state transitions
+* Payment idempotency
+* Customer validation before order creation
+* Product validation before item insertion
+* Concurrency control during write operations
+* Full observability and traceability
+* Secure access through JWT scopes
+
+---
+
+# Business Goals
+
+## Goal 1 — Reliable Order Lifecycle
+Allow customers to create, modify, confirm and cancel orders while respecting all domain constraints.
+
+## Goal 2 — Controlled Payment Processing
+Guarantee that payment requests are processed exactly once and support payment retries according to business rules.
+
+## Goal 3 — Domain Consistency
+Prevent invalid state transitions and inconsistent modifications caused by concurrent operations.
+
+## Goal 4 — Operational Visibility
+Provide traceability through structured logging, correlation identifiers, metrics and distributed tracing.
+
+---
+
+# Domain Contexts
+The platform shall be composed of the following bounded contexts:
+
+| Context             | Responsibility                     |
+| ------------------- | ---------------------------------- |
+| Order Management    | Order lifecycle and business rules |
+| Customer Management | Customer validation and status     |
+| Catalog Management  | Product availability and pricing   |
+| Payment Processing  | Payment execution and status       |
+| Notification        | Customer notifications             |
+
+Only Order Management will be implemented.
+All other contexts shall be simulated through WireMock.
+
+---
+
+# Actors
+
+## Customer
+A customer who initiates purchases.
+
+## Payment Gateway
+External system responsible for processing payments.
+
+## Internal Operator
+Authorized system consumer with access through JWT scopes.
+
+---
+
+# Order Lifecycle
+An order shall progress through well-defined states.
+
+Minimum states:
+
+* DRAFT
+* CONFIRMED
+* PAYMENT_PENDING
+* PAYMENT_APPROVED
+* PAYMENT_REJECTED
+* CANCELLED
+
+The system shall reject any transition that is not explicitly allowed.
+
+---
+
+# Functional Requirements
+
+## FR-001 Create Order
+The system shall allow creation of an order when:
+
+* Customer identifier is provided
+* Customer exists
+* Customer is active
+* Customer is not blocked
+
+The system shall reject creation otherwise.
+
+### Acceptance Criteria
+* Active customer returns success
+* Blocked customer returns validation error
+* Non-existing customer returns not found error
+
+---
+
+## FR-002 Prevent Multiple Active Orders
+The system shall ensure a customer has at most one active order.
+
+Active orders include:
+
+* DRAFT
+* CONFIRMED
+* PAYMENT_PENDING
+* PAYMENT_REJECTED
+
+### Acceptance Criteria
+
+* Attempting to create another active order shall fail
+
+---
+
+## FR-003 Add Item
+The system shall allow adding products to an order only when:
+
+* Order is modifiable
+* Product exists
+* Product is available
+* Quantity > 0
+
+### Acceptance Criteria
+
+* Existing available product is added successfully
+* Unavailable product is rejected
+* Non-existing product is rejected
+* Quantity less than or equal to zero is rejected
+
+---
+
+## FR-004 Merge Duplicate Products
+The system shall maintain a single item per product inside an order.
+
+### Acceptance Criteria
+
+* Adding the same product twice increments quantity
+* Duplicate item records are not created
+
+---
+
+## FR-005 Remove Item
+
+The system shall allow item removal from modifiable orders.
+
+### Acceptance Criteria
+
+* Existing item is removed
+* Non-existing item returns error
+
+---
+
+## FR-006 Confirm Order
+
+The system shall confirm an order only when:
+
+* Order contains at least one item
+* Order is not cancelled
+* Order has not been confirmed previously
+
+During confirmation:
+
+* Current product prices shall be retrieved from Catalog Service
+* Order total shall be recalculated
+
+### Acceptance Criteria
+
+* Empty orders cannot be confirmed
+* Confirmed orders contain calculated total amount
+
+---
+
+## FR-007 Prevent Modification After Confirmation
+
+The system shall prohibit item additions or removals after confirmation.
+
+### Acceptance Criteria
+
+* Add item returns error
+* Remove item returns error
+
+---
+
+## FR-008 Cancel Order
+
+The system shall allow cancellation only before payment approval.
+
+### Acceptance Criteria
+
+* Confirmed orders may be cancelled before approval
+* Approved orders cannot be cancelled
+
+---
+
+## FR-009 Initiate Payment
+
+The system shall initiate payment only for confirmed orders.
+
+### Acceptance Criteria
+
+* Payment request creates a payment transaction
+* Payment status becomes PAYMENT_PENDING
+
+---
+
+## FR-010 Payment Idempotency
+
+Payment initiation shall be idempotent.
+
+### Acceptance Criteria
+
+* Repeated requests with same Idempotency-Key return same result
+* No duplicate payment records are created
+
+---
+
+## FR-011 Payment Approval
+
+The system shall advance the order to PAYMENT_APPROVED when the gateway approves payment.
+
+### Acceptance Criteria
+
+* Approved callback updates order state
+* Approved callback may be safely replayed
+
+---
+
+## FR-012 Payment Rejection
+
+The system shall support payment retries.
+
+### Acceptance Criteria
+
+* Rejected payment moves order to PAYMENT_REJECTED
+* Customer may retry payment
+* Maximum retries = 3
+
+---
+
+## FR-013 Automatic Cancellation
+The system shall automatically cancel orders after three payment rejections.
+
+### Acceptance Criteria
+
+* Third rejection cancels order
+* Additional payment attempts are rejected
+
+---
+
+## FR-014 Idempotent Payment Callback
+
+The payment callback endpoint shall be idempotent.
+
+### Acceptance Criteria
+
+* Reprocessing the same event produces no side effects
+* Order state remains consistent
+
+---
+
+# External Service Integrations
+
+## Customer Service
+
+Used for:
+
+* Customer existence validation
+* Customer status validation
+
+Responses:
+
+* Active
+* Blocked
+* Not Found
+
+## Catalog Service
+
+Used for:
+
+* Product existence validation
+* Product availability validation
+* Product pricing during confirmation
+
+Responses:
+
+* Available
+* Unavailable
+* Not Found
+
+## Payment Gateway
+
+Used for:
+
+* Payment execution
+
+Responses:
+
+* Approved
+* Rejected
+* Service unavailable
+
+## Notification Service
+
+Used for:
+
+* Business event notifications
+
+Examples:
+
+* Order confirmed
+* Payment approved
+* Order cancelled
+
+---
+
+# Concurrency Requirements
+
+## CR-001
+
+The system shall prevent concurrent modifications on the same order.
+
+## CR-002
+
+The system shall prevent duplicated confirmation execution.
+
+## CR-003
+
+The system shall prevent duplicated payment execution.
+
+---
+
+# Error Handling Requirements
+
+All API errors shall follow RFC 7807 Problem Details.
+
+The response must include:
+
+* type
+* title
+* status
+* detail
+* instance
+
+---
+
+# Security Requirements
+
+## SR-001
+
+All protected endpoints require JWT authentication.
+
+## SR-002
+
+Authorization shall be scope-based.
+
+Minimum scopes:
+
+* orders:read
+* orders:write
+* payments:read
+* payments:write
+
+---
+
+# Observability Requirements
+
+## OR-001
+
+All logs shall be structured JSON.
+
+## OR-002
+
+CorrelationID shall be propagated across:
+
+* API requests
+* Database operations
+* External service calls
+
+## OR-003
+
+Metrics shall be exposed through Prometheus-compatible endpoints.
+
+## OR-004
+
+Distributed tracing shall be available through OpenTelemetry.
+
+---
+
+# Non Functional Requirements
+
+## NFR-001
+
+Domain layer coverage >= 80%.
+
+## NFR-002
+
+Mutation score >= 75%.
+
+## NFR-003
+
+Integration tests must use PostgreSQL via Testcontainers.
+
+## NFR-004
+
+External integrations must be tested through WireMock running in Testcontainers.
+
+## NFR-005
+
+Database schema changes must be versioned through migrations.
+
+## NFR-006
+
+All mutable endpoints shall support Idempotency-Key.
+
+---
+
+# Deliverables
+
+* Order Service implementation
+* OpenAPI 3.1 specification
+* Docker Compose environment
+* WireMock mappings
+* Architecture document
+* CI/CD pipeline
+* Unit tests
+* Integration tests
+* Mutation tests
+* Observability stack
