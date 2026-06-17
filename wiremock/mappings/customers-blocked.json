@@ -1,0 +1,1 @@
+{"request":{"method":"GET","urlPathPattern":"/customers/blocked.*"},"response":{"status":200,"jsonBody":{"customerId":"blocked-customer","exists":true,"active":true,"blocked":true},"headers":{"Content-Type":"application/json"}}}

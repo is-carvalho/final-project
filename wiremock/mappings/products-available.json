@@ -1,0 +1,1 @@
+{"request":{"method":"GET","urlPathPattern":"/products/available.*"},"response":{"status":200,"jsonBody":{"productId":"available-product","exists":true,"available":true,"currentPrice":25.50,"currency":"BRL"},"headers":{"Content-Type":"application/json"}}}

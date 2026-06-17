@@ -1,0 +1,1 @@
+{"request":{"method":"GET","urlPathPattern":"/customers/inactive.*"},"response":{"status":200,"jsonBody":{"customerId":"inactive-customer","exists":true,"active":false,"blocked":false},"headers":{"Content-Type":"application/json"}}}

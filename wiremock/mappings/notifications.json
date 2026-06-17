@@ -1,0 +1,1 @@
+{"request":{"method":"POST","urlPath":"/notifications"},"response":{"status":202,"jsonBody":{"accepted":true},"headers":{"Content-Type":"application/json"}}}

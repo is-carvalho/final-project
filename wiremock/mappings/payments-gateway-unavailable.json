@@ -1,0 +1,1 @@
+{"request":{"method":"POST","urlPath":"/payments","headers":{"X-Scenario":{"equalTo":"UNAVAILABLE"}}},"response":{"status":503,"jsonBody":{"message":"temporarily unavailable"},"headers":{"Content-Type":"application/json"}}}
