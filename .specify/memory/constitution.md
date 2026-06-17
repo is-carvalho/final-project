@@ -8,9 +8,9 @@ Este documento estabelece as leis arquiteturais, técnicas e de qualidade inegoc
 - **Proibição de Mocks em Produção:** O código de produção não deve conter stubs, beans de mock ou emulações embutidas para serviços externos.
 - **Comunicação Externa Real:** Toda integração externa deve ser feita via chamadas HTTP reais consumindo um servidor WireMock standalone (em ambiente de desenvolvimento/teste).
 
-## 2. PONTOS ARQUITETURAIS (CLEAN ARCHITECTURE / HEXAGONAL)
+## 2. PONTOS ARQUITETURAIS (CLEAN ARCHITECTURE)
 
-- **Arquitetura:** A arquitetura a ser seguida deve ser CLEAN ARCHITECTURE / HEXAGONAL com separação clara entre Domínio (entidades, value objects, regras de negócio, portas), Aplicação (casos de uso / use cases) e Infraestrutura (adaptadores: HTTP, banco de dados, clientes HTTP para os demais serviços)
+- **Arquitetura:** A arquitetura a ser seguida deve ser CLEAN ARCHITECTURE com separação clara entre Domínio (entidades, value objects, regras de negócio), Aplicação (casos de uso / use cases) e Infraestrutura (adaptadores: HTTP, banco de dados, clientes HTTP para os demais serviços)
 
 ## 3. GARANTIA DE QUALIDADE E COBERTURA (QA)
 

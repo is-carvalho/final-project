@@ -14,7 +14,7 @@ O plano deve detalhar arquitetura, modelagem, estratégia de implementação, or
 
 ### Arquitetura
 
-Adotar Clean Architecture / Hexagonal Architecture.
+Adotar Clean Architecture
 
 Separar claramente:
 
@@ -30,7 +30,7 @@ Separar claramente:
 Utilizar:
 
 * Java 21
-* Spring Boot 3.x
+* Spring Boot 4.x
 * Spring Data JPA
 * Spring Security OAuth2 Resource Server
 * PostgreSQL
