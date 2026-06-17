@@ -18,7 +18,7 @@ jobs:
       - run: ./mvnw -f order-service/pom.xml verify
       - run: ./mvnw -f order-service/pom.xml org.pitest:pitest-maven:mutationCoverage
       - run: docker build -t order-service:ci order-service
-      - uses: aquasecurity/trivy-action@0.28.0
+      - uses: aquasecurity/trivy-action@v0.35.0
         with:
           scan-type: fs
           scan-ref: .
