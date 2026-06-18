@@ -38,3 +38,17 @@ services:
       KEYCLOAK_ADMIN_PASSWORD: admin
     ports:
       - "8081:8080"
+  order-service:
+    build:
+      context: .
+      dockerfile: ./order-service/Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+      - wiremock
+      - keycloak
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/orders
+      SPRING_DATASOURCE_USERNAME: orders
+      SPRING_DATASOURCE_PASSWORD: orders
