@@ -1,1 +1,1 @@
-{"request":{"method":"GET","urlPathPattern":"/customers/inactive.*"},"response":{"status":200,"jsonBody":{"customerId":"inactive-customer","exists":true,"active":false,"blocked":false},"headers":{"Content-Type":"application/json"}}}
+{"request":{"method":"GET","urlPathPattern":"/customers/(inactive.*|customer-inactive)"},"response":{"status":200,"jsonBody":{"customerId":"customer-inactive","exists":true,"active":false,"blocked":false},"headers":{"Content-Type":"application/json"}}}

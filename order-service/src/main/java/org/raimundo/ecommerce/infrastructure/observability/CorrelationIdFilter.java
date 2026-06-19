@@ -13,6 +13,13 @@ import java.io.IOException;
 @Component
 public class CorrelationIdFilter extends OncePerRequestFilter {
     @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        return "/swagger-ui.html".equals(path) || "/openapi.yaml".equals(path) || "/v3/api-docs".equals(path)
+                || path.startsWith("/actuator/");
+    }
+
+    @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         String correlationId = request.getHeader("Correlation-Id");
