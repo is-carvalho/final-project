@@ -59,6 +59,8 @@ Mais detalhes estao em [`docs/architecture.md`](docs/architecture.md).
 | Grafana       | `http://localhost:3000`  | Dashboards locais                                    |
 | Jaeger        | `http://localhost:16686` | UI de tracing local                                  |
 
+O Compose tambem configura healthchecks para PostgreSQL, WireMock e Keycloak. O `order-service` so inicia depois dessas dependencias ficarem saudaveis, reduzindo falhas de subida por ordem de inicializacao.
+
 ## Como Rodar Localmente
 
 Suba toda a stack:
@@ -79,6 +81,8 @@ A aplicacao fica disponivel em:
 ```text
 http://localhost:8080
 ```
+
+Observacao importante: o Keycloak do Compose sobe em modo desenvolvimento, mas o projeto ainda nao inclui import automatico do realm `ecommerce`, clients e usuarios de teste. Para testar endpoints protegidos localmente com JWT real, e necessario criar/importar esse realm ou apontar as variaveis `JWT_ISSUER_URI` e `JWT_JWK_SET_URI` para um provedor ja configurado.
 
 ## Documentacao da API
 
@@ -227,6 +231,8 @@ Build da imagem:
 docker build -t order-service:local -f order-service\Dockerfile .
 ```
 
+O contexto do build deve ser a raiz do repositorio (`.`), porque o Dockerfile copia o Maven Wrapper, o `pom.xml` raiz e o modulo `order-service`.
+
 ## CI/CD
 
 O workflow em [`.github/workflows/ci.yml`](.github/workflows/ci.yml) executa:
@@ -236,7 +242,7 @@ O workflow em [`.github/workflows/ci.yml`](.github/workflows/ci.yml) executa:
 - testes;
 - `verify`;
 - Pitest;
-- build Docker;
+- build Docker usando `-f order-service/Dockerfile .`;
 - scan de vulnerabilidades com Trivy.
 
 ## Observabilidade
@@ -258,8 +264,11 @@ Recursos implementados:
 - OpenTelemetry com exportacao para logs;
 - Compose com Prometheus, Grafana e Jaeger.
 
+No Compose, o Prometheus coleta metricas em `order-service:8080/actuator/prometheus`, isto e, pelo nome do servico dentro da rede Docker.
+
 ## Observacoes Conhecidas
 
 - A Swagger UI usa assets via CDN.
 - O Jaeger sobe no Compose, mas a aplicacao exporta traces para logging por padrao.
+- O Keycloak sobe no Compose, mas sem realm/client/usuarios importados automaticamente.
 - Rate limiting explicito ainda nao esta implementado.

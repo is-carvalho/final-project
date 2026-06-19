@@ -340,7 +340,14 @@ O Docker Compose inclui Keycloak local para apoiar autenticacao em ambiente de d
 
 Alinhamento com o `desafio.md`: endpoints protegidos por JWT e controle por escopo foram implementados.
 
-Limite conhecido: controles OWASP adicionais, como rate limiting explicito e headers de seguranca customizados, nao estao evidenciados na implementacao atual.
+No `docker-compose.yml`, o `order-service` aponta para:
+
+- `JWT_ISSUER_URI=http://keycloak:8080/realms/ecommerce`;
+- `JWT_JWK_SET_URI=http://keycloak:8080/realms/ecommerce/protocol/openid-connect/certs`.
+
+Limites conhecidos:
+
+- o Keycloak sobe em modo desenvolvimento, mas ainda nao ha import automatico do realm `ecommerce`, clients e usuarios de teste;
 
 ## 12. Observabilidade
 
@@ -357,7 +364,9 @@ Recursos implementados:
 
 Alinhamento com o `desafio.md`: ha logs estruturados, correlacao, metricas e infraestrutura local de observabilidade.
 
-Limite conhecido: Jaeger e iniciado no Docker Compose, mas a aplicacao esta configurada para exportar traces para logging, nao diretamente para Jaeger.
+No Compose, o Prometheus coleta metricas pelo alvo interno `order-service:8080`, usando a rede Docker em vez de `localhost` ou `host.docker.internal`.
+
+Limite conhecido: Jaeger e iniciado no Docker Compose e expoe OTLP HTTP na porta `4318`, mas a aplicacao esta configurada para exportar traces para logging, nao diretamente para Jaeger.
 
 ## 13. Testes e Qualidade
 
@@ -384,6 +393,19 @@ O repositorio inclui:
 - `Dockerfile` do `order-service`;
 - `docker-compose.yml` com PostgreSQL, WireMock, Prometheus, Grafana, Jaeger, Keycloak e order-service;
 - GitHub Actions com build, testes, Pitest, build Docker e Trivy.
+
+O `Dockerfile` esta no modulo `order-service`, mas o contexto de build correto e a raiz do repositorio. Isso e necessario porque a imagem copia o Maven Wrapper, o `pom.xml` raiz e o codigo do modulo:
+
+```powershell
+docker build -t order-service:local -f order-service\Dockerfile .
+```
+
+O `docker-compose.yml` usa essa mesma estrategia:
+
+- `build.context: .`;
+- `build.dockerfile: ./order-service/Dockerfile`.
+
+O Compose tambem adiciona healthchecks em PostgreSQL, WireMock e Keycloak, e configura o `order-service` para aguardar essas dependencias saudaveis antes de iniciar.
 
 Alinhamento com o `desafio.md`: a estrutura de entrega esperada esta presente e cobre os principais servicos de apoio.
 
