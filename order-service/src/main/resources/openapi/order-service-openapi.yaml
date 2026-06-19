@@ -1,0 +1,415 @@
+openapi: 3.1.0
+info:
+  title: E-Commerce Order Service API
+  version: 0.1.0
+  description: API versionada para criacao, manutencao, confirmacao, cancelamento e pagamento de pedidos.
+servers:
+  - url: /api/v1
+security:
+  - bearerAuth: []
+tags:
+  - name: Orders
+    description: Ciclo de vida de pedidos
+  - name: Payments
+    description: Tentativas e callbacks de pagamento
+paths:
+  /orders:
+    post:
+      tags: [Orders]
+      summary: Cria um pedido em rascunho para um cliente elegivel
+      security:
+        - bearerAuth: [orders:write]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/CorrelationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderRequest'
+      responses:
+        '201':
+          description: Pedido criado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+        default:
+          $ref: '#/components/responses/Problem'
+    get:
+      tags: [Orders]
+      summary: Lista pedidos, opcionalmente filtrando por cliente
+      security:
+        - bearerAuth: [orders:read]
+      parameters:
+        - $ref: '#/components/parameters/CorrelationId'
+        - name: customerId
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Pedidos encontrados
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OrderResponse'
+        default:
+          $ref: '#/components/responses/Problem'
+  /orders/{orderId}:
+    get:
+      tags: [Orders]
+      summary: Retorna os detalhes de um pedido
+      security:
+        - bearerAuth: [orders:read]
+      parameters:
+        - $ref: '#/components/parameters/CorrelationId'
+        - $ref: '#/components/parameters/OrderId'
+      responses:
+        '200':
+          description: Pedido encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+        default:
+          $ref: '#/components/responses/Problem'
+    delete:
+      tags: [Orders]
+      summary: Cancela um pedido antes da aprovacao do pagamento
+      security:
+        - bearerAuth: [orders:write]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/CorrelationId'
+        - $ref: '#/components/parameters/OrderId'
+      responses:
+        '200':
+          description: Pedido cancelado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+        default:
+          $ref: '#/components/responses/Problem'
+  /orders/{orderId}/items:
+    post:
+      tags: [Orders]
+      summary: Adiciona um item ao pedido em rascunho
+      security:
+        - bearerAuth: [orders:write]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/CorrelationId'
+        - $ref: '#/components/parameters/OrderId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddOrderItemRequest'
+      responses:
+        '200':
+          description: Pedido atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+        default:
+          $ref: '#/components/responses/Problem'
+  /orders/{orderId}/items/{itemId}:
+    delete:
+      tags: [Orders]
+      summary: Remove um item de um pedido em rascunho
+      security:
+        - bearerAuth: [orders:write]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/CorrelationId'
+        - $ref: '#/components/parameters/OrderId'
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Pedido atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+        default:
+          $ref: '#/components/responses/Problem'
+  /orders/{orderId}/confirm:
+    post:
+      tags: [Orders]
+      summary: Confirma um pedido nao vazio usando precos atuais
+      security:
+        - bearerAuth: [orders:write]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/CorrelationId'
+        - $ref: '#/components/parameters/OrderId'
+      responses:
+        '200':
+          description: Pedido confirmado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+        default:
+          $ref: '#/components/responses/Problem'
+  /payments:
+    post:
+      tags: [Payments]
+      summary: Inicia o pagamento de um pedido confirmado
+      security:
+        - bearerAuth: [payments:write]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/CorrelationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InitiatePaymentRequest'
+      responses:
+        '201':
+          description: Pagamento iniciado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+        default:
+          $ref: '#/components/responses/Problem'
+  /payments/{paymentId}:
+    get:
+      tags: [Payments]
+      summary: Retorna o status de um pagamento
+      security:
+        - bearerAuth: [payments:read]
+      parameters:
+        - $ref: '#/components/parameters/CorrelationId'
+        - $ref: '#/components/parameters/PaymentId'
+      responses:
+        '200':
+          description: Pagamento encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+        default:
+          $ref: '#/components/responses/Problem'
+  /payments/{paymentId}/callback:
+    post:
+      tags: [Payments]
+      summary: Recebe resultado idempotente do gateway de pagamento
+      security:
+        - bearerAuth: [payments:write]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/CorrelationId'
+        - $ref: '#/components/parameters/PaymentId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentCallbackRequest'
+      responses:
+        '200':
+          description: Callback processado ou evento ja conhecido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+        default:
+          $ref: '#/components/responses/Problem'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema:
+        type: string
+      description: Chave usada para evitar efeitos duplicados em operacoes mutaveis.
+    CorrelationId:
+      name: Correlation-Id
+      in: header
+      required: true
+      schema:
+        type: string
+      description: Identificador de correlacao propagado nos logs, respostas e chamadas externas.
+    OrderId:
+      name: orderId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    PaymentId:
+      name: paymentId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    Problem:
+      description: Erro no formato RFC 7807 Problem Details
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+  schemas:
+    CreateOrderRequest:
+      type: object
+      required: [customerId]
+      properties:
+        customerId:
+          type: string
+          minLength: 1
+          example: customer-active
+    AddOrderItemRequest:
+      type: object
+      required: [productId, quantity]
+      properties:
+        productId:
+          type: string
+          minLength: 1
+          example: product-available
+        quantity:
+          type: integer
+          minimum: 1
+          example: 2
+    InitiatePaymentRequest:
+      type: object
+      required: [orderId]
+      properties:
+        orderId:
+          type: string
+          format: uuid
+    PaymentCallbackRequest:
+      type: object
+      required: [providerEventId, outcome]
+      properties:
+        providerEventId:
+          type: string
+          example: evt-123
+        outcome:
+          type: string
+          enum: [APPROVED, REJECTED]
+        providerTransactionId:
+          type: string
+          nullable: true
+          example: provider-123
+        detail:
+          type: string
+          nullable: true
+          example: approved
+    OrderResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        customerId:
+          type: string
+        status:
+          $ref: '#/components/schemas/OrderStatus'
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItemResponse'
+        totalAmount:
+          type: number
+          format: decimal
+        currency:
+          type: string
+          example: BRL
+        paymentRejectionCount:
+          type: integer
+        correlationId:
+          type: string
+          nullable: true
+    OrderItemResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        productId:
+          type: string
+        quantity:
+          type: integer
+        unitPrice:
+          type: number
+          format: decimal
+          nullable: true
+        lineTotal:
+          type: number
+          format: decimal
+          nullable: true
+    PaymentResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        orderId:
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/PaymentStatus'
+        attemptNumber:
+          type: integer
+        providerTransactionId:
+          type: string
+          nullable: true
+        amount:
+          type: number
+          format: decimal
+        currency:
+          type: string
+          example: BRL
+        correlationId:
+          type: string
+          nullable: true
+    ProblemDetail:
+      type: object
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+          format: uri
+        code:
+          type: string
+        correlationId:
+          type: string
+    OrderStatus:
+      type: string
+      enum: [DRAFT, CONFIRMED, PAYMENT_PENDING, PAYMENT_APPROVED, PAYMENT_REJECTED, CANCELLED]
+    PaymentStatus:
+      type: string
+      enum: [PENDING, APPROVED, REJECTED]

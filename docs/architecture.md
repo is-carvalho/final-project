@@ -233,7 +233,6 @@ Idempotencia HTTP:
 - `POST /api/v1/orders` persiste e reusa resposta por `Idempotency-Key`;
 - `DELETE /api/v1/orders/{id}` persiste e reusa resposta por `Idempotency-Key`;
 - `POST /api/v1/payments` reusa transacao pelo `idempotencyKey`;
-- demais mutacoes exigem o header `Idempotency-Key`
 
 ## 7. Persistencia e Consistencia
 
@@ -303,6 +302,13 @@ Endpoints de pagamentos:
 - `POST /api/v1/payments/{paymentId}/callback`.
 
 Alinhamento com o `desafio.md`: os endpoints obrigatorios foram implementados com prefixo versionado `/api/v1`.
+
+A documentacao OpenAPI 3.1 esta disponivel em:
+
+- `/v3/api-docs`;
+- `/openapi.yaml`.
+
+A Swagger UI esta disponivel em `/swagger-ui.html`.
 
 ## 10. Tratamento de Erros
 

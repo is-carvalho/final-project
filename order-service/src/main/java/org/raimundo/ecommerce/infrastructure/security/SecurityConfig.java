@@ -20,6 +20,7 @@ public class SecurityConfig {
     SecurityFilterChain securityFilterChain(HttpSecurity http, ObjectMapper mapper) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/swagger-ui.html", "/openapi.yaml", "/v3/api-docs").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/orders/**").hasAnyAuthority("SCOPE_orders:read", "SCOPE_order:read")
                         .requestMatchers("/api/v1/orders/**").hasAnyAuthority("SCOPE_orders:write", "SCOPE_order:write")
