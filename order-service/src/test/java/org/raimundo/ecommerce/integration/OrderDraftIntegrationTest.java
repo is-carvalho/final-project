@@ -56,11 +56,11 @@ class OrderDraftIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", IDEMPOTENCY_KEY)
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "customerId": "%s"
                                 }
-                                """.formatted(ACTIVE_CUSTOMER_ID)))
+                                """.formatted(ACTIVE_CUSTOMER_ID))
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andExpectAll(
                         status().isCreated(),
@@ -79,11 +79,11 @@ class OrderDraftIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-create-" + UUID.randomUUID())
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "customerId": "%s"
                                 }
-                                """.formatted(ACTIVE_CUSTOMER_ID)))
+                                """.formatted(ACTIVE_CUSTOMER_ID))
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andReturn()
                 .getResponse()
@@ -97,12 +97,12 @@ class OrderDraftIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-item-" + UUID.randomUUID())
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "productId": "%s",
                                   "quantity": 2
                                 }
-                                """.formatted(AVAILABLE_PRODUCT_ID)))
+                                """.formatted(AVAILABLE_PRODUCT_ID))
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andExpectAll(
                         status().isOk(),
@@ -118,14 +118,14 @@ class OrderDraftIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-inactive-" + UUID.randomUUID())
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "customerId": "%s"
                                 }
-                                """.formatted(INACTIVE_CUSTOMER_ID)))
+                                """.formatted(INACTIVE_CUSTOMER_ID))
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andExpectAll(
-                        status().isBadRequest(),
+                        status().isUnprocessableEntity(),
                         jsonPath("$.type", notNullValue())
                 );
     }
@@ -137,14 +137,14 @@ class OrderDraftIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-blocked-" + UUID.randomUUID())
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "customerId": "%s"
                                 }
-                                """.formatted(BLOCKED_CUSTOMER_ID)))
+                                """.formatted(BLOCKED_CUSTOMER_ID))
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andExpectAll(
-                        status().isBadRequest(),
+                        status().isUnprocessableEntity(),
                         jsonPath("$.type", notNullValue())
                 );
     }
@@ -157,11 +157,11 @@ class OrderDraftIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-create-" + UUID.randomUUID())
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "customerId": "%s"
                                 }
-                                """.formatted(ACTIVE_CUSTOMER_ID)))
+                                """.formatted(ACTIVE_CUSTOMER_ID))
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andReturn()
                 .getResponse()
@@ -175,15 +175,15 @@ class OrderDraftIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-unavail-" + UUID.randomUUID())
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "productId": "%s",
                                   "quantity": 1
                                 }
-                                """.formatted(UNAVAILABLE_PRODUCT_ID)))
+                                """.formatted(UNAVAILABLE_PRODUCT_ID))
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andExpectAll(
-                        status().isBadRequest(),
+                        status().isUnprocessableEntity(),
                         jsonPath("$.type", notNullValue())
                 );
     }
@@ -196,11 +196,11 @@ class OrderDraftIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-create-" + UUID.randomUUID())
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "customerId": "%s"
                                 }
-                                """.formatted(ACTIVE_CUSTOMER_ID)))
+                                """.formatted(ACTIVE_CUSTOMER_ID))
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andReturn()
                 .getResponse()
@@ -214,12 +214,12 @@ class OrderDraftIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-zero-" + UUID.randomUUID())
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "productId": "%s",
                                   "quantity": 0
                                 }
-                                """.formatted(AVAILABLE_PRODUCT_ID)))
+                                """.formatted(AVAILABLE_PRODUCT_ID))
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andExpectAll(
                         status().isBadRequest(),
@@ -235,11 +235,11 @@ class OrderDraftIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-create-" + UUID.randomUUID())
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "customerId": "%s"
                                 }
-                                """.formatted(ACTIVE_CUSTOMER_ID)))
+                                """.formatted(ACTIVE_CUSTOMER_ID))
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andReturn()
                 .getResponse()
@@ -252,12 +252,12 @@ class OrderDraftIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-item-" + UUID.randomUUID())
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "productId": "%s",
                                   "quantity": 1
                                 }
-                                """.formatted(AVAILABLE_PRODUCT_ID)))
+                                """.formatted(AVAILABLE_PRODUCT_ID))
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andReturn()
                 .getResponse()
@@ -284,11 +284,11 @@ class OrderDraftIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-create-" + UUID.randomUUID())
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "customerId": "%s"
                                 }
-                                """.formatted(ACTIVE_CUSTOMER_ID)))
+                                """.formatted(ACTIVE_CUSTOMER_ID))
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andReturn()
                 .getResponse()
@@ -301,12 +301,12 @@ class OrderDraftIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-first-" + UUID.randomUUID())
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "productId": "%s",
                                   "quantity": 2
                                 }
-                                """.formatted(AVAILABLE_PRODUCT_ID)))
+                                """.formatted(AVAILABLE_PRODUCT_ID))
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andReturn();
 
@@ -314,12 +314,12 @@ class OrderDraftIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-second-" + UUID.randomUUID())
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "productId": "%s",
                                   "quantity": 3
                                 }
-                                """.formatted(AVAILABLE_PRODUCT_ID)))
+                                """.formatted(AVAILABLE_PRODUCT_ID))
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andExpectAll(
                         status().isOk(),
@@ -336,11 +336,11 @@ class OrderDraftIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-create-" + UUID.randomUUID())
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "customerId": "%s"
                                 }
-                                """.formatted(ACTIVE_CUSTOMER_ID)))
+                                """.formatted(ACTIVE_CUSTOMER_ID))
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andReturn()
                 .getResponse()
@@ -350,6 +350,7 @@ class OrderDraftIntegrationTest extends IntegrationTestSupport {
 
         // Retrieve order
         mvc.perform(get("/api/v1/orders/{id}", orderId)
+                        .header("Correlation-Id", CORRELATION_ID)
                         .with(ApiTestSupport.jwtWithScopes("order:read")))
                 .andExpectAll(
                         status().isOk(),
@@ -366,16 +367,17 @@ class OrderDraftIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-create-" + UUID.randomUUID())
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "customerId": "%s"
                                 }
-                                """.formatted(ACTIVE_CUSTOMER_ID)))
+                                """.formatted(ACTIVE_CUSTOMER_ID))
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andReturn();
 
         // List orders
         mvc.perform(get("/api/v1/orders?customerId={customerId}", ACTIVE_CUSTOMER_ID)
+                        .header("Correlation-Id", CORRELATION_ID)
                         .with(ApiTestSupport.jwtWithScopes("order:read")))
                 .andExpectAll(
                         status().isOk(),
@@ -394,11 +396,11 @@ class OrderDraftIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", idempotencyKey)
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "customerId": "%s"
                                 }
-                                """.formatted(ACTIVE_CUSTOMER_ID)))
+                                """.formatted(ACTIVE_CUSTOMER_ID))
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andExpectAll(status().isCreated())
                 .andReturn()
@@ -412,11 +414,11 @@ class OrderDraftIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", idempotencyKey)
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "customerId": "%s"
                                 }
-                                """.formatted(ACTIVE_CUSTOMER_ID)))
+                                """.formatted(ACTIVE_CUSTOMER_ID))
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andExpectAll(status().isCreated())
                 .andReturn()

@@ -30,8 +30,8 @@ public class PaymentController {
                                                          @RequestHeader("Idempotency-Key") String key,
                                                          @RequestHeader("Correlation-Id") String correlationId) {
         IdempotencyService.requireKey(key);
-        return ResponseEntity.status(HttpStatus.ACCEPTED)
-                .body(PaymentDtos.PaymentResponse.from(payments.initiate(request.orderId(), key, correlationId)));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(PaymentDtos.PaymentResponse.from(payments.initiate(request.orderId(), key, correlationId), correlationId));
     }
 
     @GetMapping("/{id}")
@@ -45,6 +45,6 @@ public class PaymentController {
                                          @RequestHeader("Correlation-Id") String correlationId) {
         IdempotencyService.requireKey(key);
         return PaymentDtos.PaymentResponse.from(payments.process(id, request.providerEventId(), request.outcome(),
-                request.providerTransactionId(), request.detail(), correlationId));
+                request.providerTransactionId(), request.detail(), correlationId), correlationId);
     }
 }

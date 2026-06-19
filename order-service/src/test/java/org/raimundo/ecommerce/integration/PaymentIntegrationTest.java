@@ -10,6 +10,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
@@ -52,17 +53,17 @@ class PaymentIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-init-" + UUID.randomUUID())
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "orderId": "%s"
                                 }
-                                """.formatted(orderId)))
+                                """.formatted(orderId))
                         .with(ApiTestSupport.jwtWithScopes("payment:write")))
                 .andExpectAll(
                         status().isCreated(),
                         jsonPath("$.id", notNullValue()),
                         jsonPath("$.orderId", is(orderId.toString())),
-                        jsonPath("$.status", is("PENDING"))
+                        jsonPath("$.status", is("APPROVED"))
                 );
     }
 
@@ -77,11 +78,11 @@ class PaymentIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-init-" + UUID.randomUUID())
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "orderId": "%s"
                                 }
-                                """.formatted(orderId)))
+                                """.formatted(orderId))
                         .with(ApiTestSupport.jwtWithScopes("payment:write")))
                 .andReturn()
                 .getResponse()
@@ -89,15 +90,21 @@ class PaymentIntegrationTest extends IntegrationTestSupport {
 
         UUID paymentId = UUID.fromString(mapper.readTree(paymentResponse).get("id").asText());
 
-        // First callback
+        String callbackKey = "key-callback-approved-" + UUID.randomUUID();
+
+        // First callback replays the provider event already received from the gateway
         mvc.perform(post("/api/v1/payments/{id}/callback", paymentId)
+                        .header("Idempotency-Key", callbackKey)
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
-                                {
-                                  "status": "APPROVED"
-                                }
-                                """))
+                        .content("""
+                                 {
+                                   "providerEventId": "gateway-%s",
+                                   "outcome": "APPROVED",
+                                   "providerTransactionId": "provider-approved",
+                                   "detail": "approved"
+                                 }
+                                 """.formatted(paymentId))
                         .with(ApiTestSupport.jwtWithScopes("payment:write")))
                 .andExpectAll(
                         status().isOk(),
@@ -106,13 +113,17 @@ class PaymentIntegrationTest extends IntegrationTestSupport {
 
         // Replay callback
         mvc.perform(post("/api/v1/payments/{id}/callback", paymentId)
+                        .header("Idempotency-Key", callbackKey)
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
-                                {
-                                  "status": "APPROVED"
-                                }
-                                """))
+                        .content("""
+                                 {
+                                   "providerEventId": "gateway-%s",
+                                   "outcome": "APPROVED",
+                                   "providerTransactionId": "provider-approved",
+                                   "detail": "approved"
+                                 }
+                                 """.formatted(paymentId))
                         .with(ApiTestSupport.jwtWithScopes("payment:write")))
                 .andExpectAll(
                         status().isOk(),
@@ -128,11 +139,11 @@ class PaymentIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-draft-" + UUID.randomUUID())
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "customerId": "%s"
                                 }
-                                """.formatted(ACTIVE_CUSTOMER_ID)))
+                                """.formatted(ACTIVE_CUSTOMER_ID))
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andReturn()
                 .getResponse()
@@ -145,14 +156,14 @@ class PaymentIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-draft-pay-" + UUID.randomUUID())
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "orderId": "%s"
                                 }
-                                """.formatted(orderId)))
+                                """.formatted(orderId))
                         .with(ApiTestSupport.jwtWithScopes("payment:write")))
                 .andExpectAll(
-                        status().isBadRequest(),
+                        status().isUnprocessableEntity(),
                         jsonPath("$.type", notNullValue())
                 );
     }
@@ -170,11 +181,11 @@ class PaymentIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", idempotencyKey)
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "orderId": "%s"
                                 }
-                                """.formatted(orderId)))
+                                """.formatted(orderId))
                         .with(ApiTestSupport.jwtWithScopes("payment:write")))
                 .andExpectAll(status().isCreated())
                 .andReturn()
@@ -188,11 +199,11 @@ class PaymentIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", idempotencyKey)
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "orderId": "%s"
                                 }
-                                """.formatted(orderId)))
+                                """.formatted(orderId))
                         .with(ApiTestSupport.jwtWithScopes("payment:write")))
                 .andExpectAll(status().isCreated())
                 .andReturn()
@@ -216,11 +227,11 @@ class PaymentIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-get-" + UUID.randomUUID())
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "orderId": "%s"
                                 }
-                                """.formatted(orderId)))
+                                """.formatted(orderId))
                         .with(ApiTestSupport.jwtWithScopes("payment:write")))
                 .andReturn()
                 .getResponse()
@@ -230,12 +241,13 @@ class PaymentIntegrationTest extends IntegrationTestSupport {
 
         // Get payment
         mvc.perform(get("/api/v1/payments/{id}", paymentId)
+                        .header("Correlation-Id", CORRELATION_ID)
                         .with(ApiTestSupport.jwtWithScopes("payment:read")))
                 .andExpectAll(
                         status().isOk(),
                         jsonPath("$.id", is(paymentId.toString())),
                         jsonPath("$.orderId", is(orderId.toString())),
-                        jsonPath("$.status", is("PENDING"))
+                        jsonPath("$.status", is("APPROVED"))
                 );
     }
 
@@ -250,32 +262,19 @@ class PaymentIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-reject-" + UUID.randomUUID())
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "orderId": "%s"
                                 }
-                                """.formatted(orderId)))
+                                """.formatted(orderId))
                         .with(ApiTestSupport.jwtWithScopes("payment:write")))
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
 
-        UUID paymentId = UUID.fromString(mapper.readTree(paymentResponse).get("id").asText());
+        mapper.readTree(paymentResponse).get("id").asText();
 
-        // Process rejection callback
-        mvc.perform(post("/api/v1/payments/{id}/callback", paymentId)
-                        .header("Correlation-Id", CORRELATION_ID)
-                        .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
-                                {
-                                  "status": "REJECTED"
-                                }
-                                """))
-                        .with(ApiTestSupport.jwtWithScopes("payment:write")))
-                .andExpectAll(
-                        status().isOk(),
-                        jsonPath("$.status", is("REJECTED"))
-                );
+        jsonAssertStatus(paymentResponse, "REJECTED");
     }
 
     @Test
@@ -289,11 +288,11 @@ class PaymentIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-retry-" + UUID.randomUUID())
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "orderId": "%s"
                                 }
-                                """.formatted(orderId)))
+                                """.formatted(orderId))
                         .with(ApiTestSupport.jwtWithScopes("payment:write")))
                 .andReturn()
                 .getResponse()
@@ -303,13 +302,17 @@ class PaymentIntegrationTest extends IntegrationTestSupport {
 
         // First rejection
         mvc.perform(post("/api/v1/payments/{id}/callback", paymentId)
+                        .header("Idempotency-Key", "key-callback-retry-" + UUID.randomUUID())
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
-                                {
-                                  "status": "REJECTED"
-                                }
-                                """))
+                        .content("""
+                                 {
+                                   "providerEventId": "gateway-%s",
+                                   "outcome": "REJECTED",
+                                   "providerTransactionId": "provider-rejected",
+                                   "detail": "rejected"
+                                 }
+                                 """.formatted(paymentId))
                         .with(ApiTestSupport.jwtWithScopes("payment:write")))
                 .andReturn();
 
@@ -318,16 +321,20 @@ class PaymentIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-retry-2-" + UUID.randomUUID())
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "orderId": "%s"
                                 }
-                                """.formatted(orderId)))
+                                """.formatted(orderId))
                         .with(ApiTestSupport.jwtWithScopes("payment:write")))
                 .andExpectAll(
                         status().isCreated(),
-                        jsonPath("$.status", is("PENDING"))
+                        jsonPath("$.status", is("REJECTED"))
                 );
+    }
+
+    private void jsonAssertStatus(String response, String expectedStatus) throws Exception {
+        assertEquals(expectedStatus, mapper.readTree(response).get("status").asText());
     }
 
     // Helper method
@@ -337,11 +344,11 @@ class PaymentIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-order-" + UUID.randomUUID())
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "customerId": "%s"
                                 }
-                                """.formatted(ACTIVE_CUSTOMER_ID)))
+                                """.formatted(ACTIVE_CUSTOMER_ID))
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andReturn()
                 .getResponse()
@@ -354,12 +361,12 @@ class PaymentIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-item-" + UUID.randomUUID())
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "productId": "%s",
                                   "quantity": 1
                                 }
-                                """.formatted(AVAILABLE_PRODUCT_ID)))
+                                """.formatted(AVAILABLE_PRODUCT_ID))
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andReturn();
 

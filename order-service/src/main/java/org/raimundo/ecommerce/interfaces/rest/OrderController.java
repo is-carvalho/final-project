@@ -7,6 +7,7 @@ import org.raimundo.ecommerce.application.idempotency.IdempotencyService;
 import org.raimundo.ecommerce.application.order.OrderService;
 import org.raimundo.ecommerce.interfaces.dto.OrderDtos;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -43,9 +44,11 @@ public class OrderController {
         String body = mapper.writeValueAsString(request);
         var replay = idempotency.replay("create-order", "-", caller(authentication), key, body);
         if (replay.isPresent()) {
-            return ResponseEntity.status(HttpStatus.CREATED).body(mapper.readTree(replay.get()));
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(replay.get());
         }
-        var response = OrderDtos.OrderResponse.from(orders.create(request.customerId(), caller(authentication), correlationId));
+        var response = OrderDtos.OrderResponse.from(orders.create(request.customerId(), caller(authentication), correlationId), correlationId);
         idempotency.remember("create-order", "-", caller(authentication), key, body, 201, mapper.writeValueAsString(response));
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -66,7 +69,7 @@ public class OrderController {
                                     @RequestHeader("Correlation-Id") String correlationId,
                                     Authentication authentication) {
         IdempotencyService.requireKey(key);
-        return OrderDtos.OrderResponse.from(orders.addItem(id, request.productId(), request.quantity(), caller(authentication), correlationId));
+        return OrderDtos.OrderResponse.from(orders.addItem(id, request.productId(), request.quantity(), caller(authentication), correlationId), correlationId);
     }
 
     @DeleteMapping("/{id}/items/{itemId}")
@@ -75,7 +78,7 @@ public class OrderController {
                                        @RequestHeader("Correlation-Id") String correlationId,
                                        Authentication authentication) {
         IdempotencyService.requireKey(key);
-        return OrderDtos.OrderResponse.from(orders.removeItem(id, itemId, caller(authentication), correlationId));
+        return OrderDtos.OrderResponse.from(orders.removeItem(id, itemId, caller(authentication), correlationId), correlationId);
     }
 
     @PostMapping("/{id}/confirm")
@@ -83,15 +86,23 @@ public class OrderController {
                                     @RequestHeader("Correlation-Id") String correlationId,
                                     Authentication authentication) {
         IdempotencyService.requireKey(key);
-        return OrderDtos.OrderResponse.from(orders.confirm(id, caller(authentication), correlationId));
+        return OrderDtos.OrderResponse.from(orders.confirm(id, caller(authentication), correlationId), correlationId);
     }
 
     @DeleteMapping("/{id}")
-    OrderDtos.OrderResponse cancel(@PathVariable UUID id, @RequestHeader("Idempotency-Key") String key,
-                                   @RequestHeader("Correlation-Id") String correlationId,
-                                   Authentication authentication) {
-        IdempotencyService.requireKey(key);
-        return OrderDtos.OrderResponse.from(orders.cancel(id, caller(authentication), correlationId));
+    ResponseEntity<?> cancel(@PathVariable UUID id, @RequestHeader("Idempotency-Key") String key,
+                             @RequestHeader("Correlation-Id") String correlationId,
+                             Authentication authentication) throws JsonProcessingException {
+        String resourceId = id.toString();
+        var replay = idempotency.replay("cancel-order", resourceId, caller(authentication), key, "");
+        if (replay.isPresent()) {
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(replay.get());
+        }
+        var response = OrderDtos.OrderResponse.from(orders.cancel(id, caller(authentication), correlationId), correlationId);
+        idempotency.remember("cancel-order", resourceId, caller(authentication), key, "", 200, mapper.writeValueAsString(response));
+        return ResponseEntity.ok(response);
     }
 
     private String caller(Authentication authentication) {

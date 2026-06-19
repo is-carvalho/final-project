@@ -47,11 +47,11 @@ class SecurityIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-" + UUID.randomUUID())
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "customerId": "%s"
                                 }
-                                """.formatted(ACTIVE_CUSTOMER_ID))))
+                                """.formatted(ACTIVE_CUSTOMER_ID)))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -62,11 +62,11 @@ class SecurityIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-" + UUID.randomUUID())
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "customerId": "%s"
                                 }
-                                """.formatted(ACTIVE_CUSTOMER_ID)))
+                                """.formatted(ACTIVE_CUSTOMER_ID))
                         .with(ApiTestSupport.jwtWithScopes("order:read")))
                 .andExpect(status().isForbidden());
     }
@@ -79,11 +79,11 @@ class SecurityIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-create-" + UUID.randomUUID())
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "customerId": "%s"
                                 }
-                                """.formatted(ACTIVE_CUSTOMER_ID)))
+                                """.formatted(ACTIVE_CUSTOMER_ID))
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andReturn()
                 .getResponse()
@@ -93,6 +93,7 @@ class SecurityIntegrationTest extends IntegrationTestSupport {
 
         // Try to read without scope
         mvc.perform(get("/api/v1/orders/{id}", orderId)
+                        .header("Correlation-Id", CORRELATION_ID)
                         .with(ApiTestSupport.jwtWithScopes("payment:read")))
                 .andExpect(status().isForbidden());
     }
@@ -105,11 +106,11 @@ class SecurityIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-create-" + UUID.randomUUID())
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "customerId": "%s"
                                 }
-                                """.formatted(ACTIVE_CUSTOMER_ID)))
+                                """.formatted(ACTIVE_CUSTOMER_ID))
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andReturn()
                 .getResponse()
@@ -119,6 +120,7 @@ class SecurityIntegrationTest extends IntegrationTestSupport {
 
         // Read with proper scope
         mvc.perform(get("/api/v1/orders/{id}", orderId)
+                        .header("Correlation-Id", CORRELATION_ID)
                         .with(ApiTestSupport.jwtWithScopes("order:read")))
                 .andExpect(status().isOk());
     }
@@ -131,11 +133,11 @@ class SecurityIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-create-" + UUID.randomUUID())
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "customerId": "%s"
                                 }
-                                """.formatted(ACTIVE_CUSTOMER_ID)))
+                                """.formatted(ACTIVE_CUSTOMER_ID))
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andReturn()
                 .getResponse()
@@ -148,12 +150,12 @@ class SecurityIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-item-" + UUID.randomUUID())
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "productId": "%s",
                                   "quantity": 1
                                 }
-                                """.formatted(AVAILABLE_PRODUCT_ID)))
+                                """.formatted(AVAILABLE_PRODUCT_ID))
                         .with(ApiTestSupport.jwtWithScopes("order:read")))
                 .andExpect(status().isForbidden());
     }
@@ -166,11 +168,11 @@ class SecurityIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-create-" + UUID.randomUUID())
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "customerId": "%s"
                                 }
-                                """.formatted(ACTIVE_CUSTOMER_ID)))
+                                """.formatted(ACTIVE_CUSTOMER_ID))
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andReturn()
                 .getResponse()
@@ -182,12 +184,12 @@ class SecurityIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-item-" + UUID.randomUUID())
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "productId": "%s",
                                   "quantity": 1
                                 }
-                                """.formatted(AVAILABLE_PRODUCT_ID)))
+                                """.formatted(AVAILABLE_PRODUCT_ID))
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andReturn();
 
@@ -207,11 +209,11 @@ class SecurityIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-order-" + UUID.randomUUID())
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "customerId": "%s"
                                 }
-                                """.formatted(ACTIVE_CUSTOMER_ID)))
+                                """.formatted(ACTIVE_CUSTOMER_ID))
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andReturn()
                 .getResponse()
@@ -223,12 +225,12 @@ class SecurityIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-item-" + UUID.randomUUID())
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "productId": "%s",
                                   "quantity": 1
                                 }
-                                """.formatted(AVAILABLE_PRODUCT_ID)))
+                                """.formatted(AVAILABLE_PRODUCT_ID))
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andReturn();
 
@@ -243,11 +245,11 @@ class SecurityIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-pay-" + UUID.randomUUID())
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "orderId": "%s"
                                 }
-                                """.formatted(orderId)))
+                                """.formatted(orderId))
                         .with(ApiTestSupport.jwtWithScopes("payment:read")))
                 .andExpect(status().isForbidden());
     }
@@ -260,11 +262,11 @@ class SecurityIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-order-" + UUID.randomUUID())
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "customerId": "%s"
                                 }
-                                """.formatted(ACTIVE_CUSTOMER_ID)))
+                                """.formatted(ACTIVE_CUSTOMER_ID))
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andReturn()
                 .getResponse()
@@ -276,12 +278,12 @@ class SecurityIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-item-" + UUID.randomUUID())
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "productId": "%s",
                                   "quantity": 1
                                 }
-                                """.formatted(AVAILABLE_PRODUCT_ID)))
+                                """.formatted(AVAILABLE_PRODUCT_ID))
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andReturn();
 
@@ -295,11 +297,11 @@ class SecurityIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-pay-" + UUID.randomUUID())
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "orderId": "%s"
                                 }
-                                """.formatted(orderId)))
+                                """.formatted(orderId))
                         .with(ApiTestSupport.jwtWithScopes("payment:write")))
                 .andReturn()
                 .getResponse()
@@ -309,6 +311,7 @@ class SecurityIntegrationTest extends IntegrationTestSupport {
 
         // Try to read payment without scope
         mvc.perform(get("/api/v1/payments/{id}", paymentId)
+                        .header("Correlation-Id", CORRELATION_ID)
                         .with(ApiTestSupport.jwtWithScopes("order:read")))
                 .andExpect(status().isForbidden());
     }

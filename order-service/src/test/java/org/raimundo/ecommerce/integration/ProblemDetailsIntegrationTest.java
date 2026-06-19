@@ -47,11 +47,11 @@ class ProblemDetailsIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-" + UUID.randomUUID())
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "customerId": ""
                                 }
-                                """))
+                                """)
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andExpectAll(
                         status().isBadRequest(),
@@ -70,14 +70,14 @@ class ProblemDetailsIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-" + UUID.randomUUID())
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "customerId": "customer-blocked"
                                 }
-                                """))
+                                """)
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andExpectAll(
-                        status().isBadRequest(),
+                        status().isUnprocessableEntity(),
                         jsonPath("$.type", notNullValue()),
                         jsonPath("$.title", notNullValue()),
                         jsonPath("$.status", notNullValue()),
@@ -93,11 +93,11 @@ class ProblemDetailsIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-create-" + UUID.randomUUID())
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "customerId": "%s"
                                 }
-                                """.formatted(ACTIVE_CUSTOMER_ID)))
+                                """.formatted(ACTIVE_CUSTOMER_ID))
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andReturn()
                 .getResponse()
@@ -110,12 +110,12 @@ class ProblemDetailsIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-invalid-" + UUID.randomUUID())
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "productId": "%s",
                                   "quantity": -1
                                 }
-                                """.formatted(AVAILABLE_PRODUCT_ID)))
+                                """.formatted(AVAILABLE_PRODUCT_ID))
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andExpectAll(
                         status().isBadRequest(),
@@ -134,11 +134,11 @@ class ProblemDetailsIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-create-" + UUID.randomUUID())
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "customerId": "%s"
                                 }
-                                """.formatted(ACTIVE_CUSTOMER_ID)))
+                                """.formatted(ACTIVE_CUSTOMER_ID))
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andReturn()
                 .getResponse()
@@ -149,12 +149,12 @@ class ProblemDetailsIntegrationTest extends IntegrationTestSupport {
         mvc.perform(post("/api/v1/orders/{id}/items", orderId)
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "productId": "%s",
                                   "quantity": 1
                                 }
-                                """.formatted(AVAILABLE_PRODUCT_ID)))
+                                """.formatted(AVAILABLE_PRODUCT_ID))
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andExpectAll(
                         status().isBadRequest(),
@@ -170,11 +170,11 @@ class ProblemDetailsIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-" + UUID.randomUUID())
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "customerId": "%s"
                                 }
-                                """.formatted(ACTIVE_CUSTOMER_ID)))
+                                """.formatted(ACTIVE_CUSTOMER_ID))
                         .with(ApiTestSupport.jwtWithScopes("order:read")))
                 .andExpectAll(
                         status().isForbidden(),
@@ -192,11 +192,11 @@ class ProblemDetailsIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-get-" + UUID.randomUUID())
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "customerId": "%s"
                                 }
-                                """.formatted(ACTIVE_CUSTOMER_ID)))
+                                """.formatted(ACTIVE_CUSTOMER_ID))
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andReturn();
 
@@ -223,14 +223,14 @@ class ProblemDetailsIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-" + UUID.randomUUID())
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "customerId": "non-existent-customer"
                                 }
-                                """))
+                                """)
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andExpectAll(
-                        status().isBadRequest(),
+                        status().isUnprocessableEntity(),
                         jsonPath("$.type", notNullValue()),
                         jsonPath("$.title", notNullValue()),
                         jsonPath("$.status", notNullValue())
@@ -247,14 +247,14 @@ class ProblemDetailsIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-" + UUID.randomUUID())
                         .header("Correlation-Id", correlationIdValue)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "customerId": "customer-blocked"
                                 }
-                                """))
+                                """)
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andExpectAll(
-                        status().isBadRequest(),
+                        status().isUnprocessableEntity(),
                         jsonPath("$.type", notNullValue()),
                         jsonPath("$.correlationId", notNullValue())
                 );

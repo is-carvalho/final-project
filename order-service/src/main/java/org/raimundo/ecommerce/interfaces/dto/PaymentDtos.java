@@ -19,10 +19,15 @@ public final class PaymentDtos {
     }
 
     public record PaymentResponse(UUID id, UUID orderId, String status, int attemptNumber,
-                                  String providerTransactionId, BigDecimal amount, String currency) {
+                                  String providerTransactionId, BigDecimal amount, String currency,
+                                  String correlationId) {
         public static PaymentResponse from(PaymentTransaction payment) {
+            return from(payment, null);
+        }
+
+        public static PaymentResponse from(PaymentTransaction payment, String correlationId) {
             return new PaymentResponse(payment.id(), payment.orderId(), payment.status().name(), payment.attemptNumber(),
-                    payment.providerTransactionId(), payment.amount().amount(), payment.amount().currency());
+                    payment.providerTransactionId(), payment.amount().amount(), payment.amount().currency(), correlationId);
         }
     }
 }

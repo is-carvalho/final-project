@@ -56,7 +56,7 @@ class OrderLifecycleIntegrationTest extends IntegrationTestSupport {
                 .andExpectAll(
                         status().isOk(),
                         jsonPath("$.status", is("CONFIRMED")),
-                        jsonPath("$.totalPrice", notNullValue())
+                        jsonPath("$.totalAmount", notNullValue())
                 );
     }
 
@@ -68,11 +68,11 @@ class OrderLifecycleIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-empty-" + UUID.randomUUID())
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "customerId": "%s"
                                 }
-                                """.formatted(ACTIVE_CUSTOMER_ID)))
+                                """.formatted(ACTIVE_CUSTOMER_ID))
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andReturn()
                 .getResponse()
@@ -86,7 +86,7 @@ class OrderLifecycleIntegrationTest extends IntegrationTestSupport {
                         .header("Correlation-Id", CORRELATION_ID)
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andExpectAll(
-                        status().isBadRequest(),
+                        status().isUnprocessableEntity(),
                         jsonPath("$.type", notNullValue())
                 );
     }
@@ -104,15 +104,15 @@ class OrderLifecycleIntegrationTest extends IntegrationTestSupport {
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andExpectAll(
                         status().isOk(),
-                        jsonPath("$.totalPrice", notNullValue()),
-                        jsonPath("$.totalPrice", greaterThan(0))
+                        jsonPath("$.totalAmount", notNullValue()),
+                        jsonPath("$.totalAmount", greaterThan(0.0))
                 )
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
 
         // Verify prices are set
-        assert mapper.readTree(beforeConfirm).get("items").get(0).get("price") != null;
+        assert mapper.readTree(beforeConfirm).get("items").get(0).get("unitPrice") != null;
     }
 
     @Test
@@ -133,15 +133,15 @@ class OrderLifecycleIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-after-" + UUID.randomUUID())
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "productId": "%s",
                                   "quantity": 1
                                 }
-                                """.formatted(AVAILABLE_PRODUCT_ID)))
+                                """.formatted(AVAILABLE_PRODUCT_ID))
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andExpectAll(
-                        status().isBadRequest(),
+                        status().isUnprocessableEntity(),
                         jsonPath("$.type", notNullValue())
                 );
     }
@@ -177,11 +177,11 @@ class OrderLifecycleIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-draft-" + UUID.randomUUID())
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "customerId": "%s"
                                 }
-                                """.formatted(ACTIVE_CUSTOMER_ID)))
+                                """.formatted(ACTIVE_CUSTOMER_ID))
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andReturn()
                 .getResponse()
@@ -203,28 +203,14 @@ class OrderLifecycleIntegrationTest extends IntegrationTestSupport {
     @Test
     @DisplayName("Should reject invalid state transition")
     void testRejectInvalidStateTransition() throws Exception {
-        // Create draft order
-        String createResponse = mvc.perform(post("/api/v1/orders")
-                        .header("Idempotency-Key", "key-invalid-" + UUID.randomUUID())
-                        .header("Correlation-Id", CORRELATION_ID)
-                        .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
-                                {
-                                  "customerId": "%s"
-                                }
-                                """.formatted(ACTIVE_CUSTOMER_ID)))
-                        .with(ApiTestSupport.jwtWithScopes("order:write")))
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
+        UUID orderId = createAndAddItemToDraftOrder();
 
-        UUID orderId = UUID.fromString(mapper.readTree(createResponse).get("id").asText());
-
-        // Try to confirm then confirm again (invalid transition)
+        // Confirm first, then try to edit the confirmed order.
         mvc.perform(post("/api/v1/orders/{id}/confirm", orderId)
                         .header("Idempotency-Key", "key-conf-1-" + UUID.randomUUID())
                         .header("Correlation-Id", CORRELATION_ID)
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
+                .andExpectAll(status().isOk())
                 .andReturn();
 
         // This should fail because trying to add item to confirmed order
@@ -232,14 +218,14 @@ class OrderLifecycleIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-add-" + UUID.randomUUID())
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "productId": "%s",
                                   "quantity": 1
                                 }
-                                """.formatted(AVAILABLE_PRODUCT_ID)))
+                                """.formatted(AVAILABLE_PRODUCT_ID))
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
-                .andExpectAll(status().isBadRequest());
+                .andExpectAll(status().isUnprocessableEntity());
     }
 
     @Test
@@ -275,11 +261,11 @@ class OrderLifecycleIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-create-" + UUID.randomUUID())
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "customerId": "%s"
                                 }
-                                """.formatted(ACTIVE_CUSTOMER_ID)))
+                                """.formatted(ACTIVE_CUSTOMER_ID))
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andReturn()
                 .getResponse()
@@ -292,12 +278,12 @@ class OrderLifecycleIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-item-" + UUID.randomUUID())
                         .header("Correlation-Id", CORRELATION_ID)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "productId": "%s",
                                   "quantity": 1
                                 }
-                                """.formatted(AVAILABLE_PRODUCT_ID)))
+                                """.formatted(AVAILABLE_PRODUCT_ID))
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andReturn();
 

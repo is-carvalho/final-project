@@ -3,10 +3,12 @@ package org.raimundo.ecommerce.interfaces.problem;
 import org.raimundo.ecommerce.application.idempotency.IdempotencyConflictException;
 import org.raimundo.ecommerce.domain.common.DomainException;
 import org.raimundo.ecommerce.infrastructure.observability.MetricsService;
+import org.raimundo.ecommerce.infrastructure.observability.CorrelationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -38,6 +40,11 @@ public class ProblemExceptionHandler {
         return problem(HttpStatus.BAD_REQUEST, "validation_error", "Request validation failed");
     }
 
+    @ExceptionHandler(MissingRequestHeaderException.class)
+    ResponseEntity<ProblemDetail> missingHeader(MissingRequestHeaderException exception) {
+        return problem(HttpStatus.BAD_REQUEST, "missing_header", exception.getHeaderName() + " header is required");
+    }
+
     @ExceptionHandler(AccessDeniedException.class)
     ResponseEntity<ProblemDetail> denied(AccessDeniedException exception) {
         return problem(HttpStatus.FORBIDDEN, "forbidden", "Insufficient scope");
@@ -53,6 +60,7 @@ public class ProblemExceptionHandler {
         problem.setType(URI.create("https://ecommerce.raimundo.org/problems/" + code));
         problem.setTitle(status.getReasonPhrase());
         problem.setProperty("code", code);
+        problem.setProperty("correlationId", CorrelationContext.get());
         return ResponseEntity.status(status).body(problem);
     }
 }

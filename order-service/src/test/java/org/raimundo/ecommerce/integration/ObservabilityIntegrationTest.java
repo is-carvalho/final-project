@@ -47,11 +47,11 @@ class ObservabilityIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-" + UUID.randomUUID())
                         .header("Correlation-Id", correlationIdValue)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "customerId": "%s"
                                 }
-                                """.formatted(ACTIVE_CUSTOMER_ID)))
+                                """.formatted(ACTIVE_CUSTOMER_ID))
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andExpectAll(
                         status().isCreated(),
@@ -70,11 +70,11 @@ class ObservabilityIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-create-" + UUID.randomUUID())
                         .header("Correlation-Id", correlationIdValue)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "customerId": "%s"
                                 }
-                                """.formatted(ACTIVE_CUSTOMER_ID)))
+                                """.formatted(ACTIVE_CUSTOMER_ID))
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andReturn()
                 .getResponse()
@@ -87,12 +87,12 @@ class ObservabilityIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-item-" + UUID.randomUUID())
                         .header("Correlation-Id", correlationIdValue)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "productId": "%s",
                                   "quantity": 1
                                 }
-                                """.formatted(AVAILABLE_PRODUCT_ID)))
+                                """.formatted(AVAILABLE_PRODUCT_ID))
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andExpectAll(
                         status().isOk(),
@@ -110,11 +110,11 @@ class ObservabilityIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-create-" + UUID.randomUUID())
                         .header("Correlation-Id", correlationIdValue)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "customerId": "%s"
                                 }
-                                """.formatted(ACTIVE_CUSTOMER_ID)))
+                                """.formatted(ACTIVE_CUSTOMER_ID))
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andReturn()
                 .getResponse()
@@ -127,12 +127,12 @@ class ObservabilityIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-item-" + UUID.randomUUID())
                         .header("Correlation-Id", correlationIdValue)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "productId": "%s",
                                   "quantity": 1
                                 }
-                                """.formatted(AVAILABLE_PRODUCT_ID)))
+                                """.formatted(AVAILABLE_PRODUCT_ID))
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andReturn();
 
@@ -157,11 +157,11 @@ class ObservabilityIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-" + UUID.randomUUID())
                         .header("Correlation-Id", correlationIdValue)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "customerId": "%s"
                                 }
-                                """.formatted(ACTIVE_CUSTOMER_ID)))
+                                """.formatted(ACTIVE_CUSTOMER_ID))
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andExpectAll(
                         status().isCreated(),
@@ -182,11 +182,11 @@ class ObservabilityIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-create-" + UUID.randomUUID())
                         .header("Correlation-Id", correlationIdValue)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "customerId": "%s"
                                 }
-                                """.formatted(ACTIVE_CUSTOMER_ID)))
+                                """.formatted(ACTIVE_CUSTOMER_ID))
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andReturn()
                 .getResponse()
@@ -198,12 +198,12 @@ class ObservabilityIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-item-" + UUID.randomUUID())
                         .header("Correlation-Id", correlationIdValue)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "productId": "%s",
                                   "quantity": 1
                                 }
-                                """.formatted(AVAILABLE_PRODUCT_ID)))
+                                """.formatted(AVAILABLE_PRODUCT_ID))
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andReturn();
 
@@ -218,11 +218,11 @@ class ObservabilityIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-pay-" + UUID.randomUUID())
                         .header("Correlation-Id", correlationIdValue)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "orderId": "%s"
                                 }
-                                """.formatted(orderId)))
+                                """.formatted(orderId))
                         .with(ApiTestSupport.jwtWithScopes("payment:write")))
                 .andExpectAll(
                         status().isCreated(),
@@ -240,11 +240,11 @@ class ObservabilityIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-1-" + UUID.randomUUID())
                         .header("Correlation-Id", correlationIdValue)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "customerId": "%s"
                                 }
-                                """.formatted(ACTIVE_CUSTOMER_ID)))
+                                """.formatted(ACTIVE_CUSTOMER_ID))
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andExpectAll(jsonPath("$.correlationId", is(correlationIdValue)))
                 .andReturn()
@@ -258,12 +258,12 @@ class ObservabilityIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-2-" + UUID.randomUUID())
                         .header("Correlation-Id", correlationIdValue)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "productId": "%s",
                                   "quantity": 1
                                 }
-                                """.formatted(AVAILABLE_PRODUCT_ID)))
+                                """.formatted(AVAILABLE_PRODUCT_ID))
                         .with(ApiTestSupport.jwtWithScopes("order:write")))
                 .andExpectAll(jsonPath("$.correlationId", is(correlationIdValue)));
 
@@ -279,11 +279,11 @@ class ObservabilityIntegrationTest extends IntegrationTestSupport {
                         .header("Idempotency-Key", "key-4-" + UUID.randomUUID())
                         .header("Correlation-Id", correlationIdValue)
                         .contentType(APPLICATION_JSON)
-                        .content(mapper.writeValueAsString("""
+                        .content("""
                                 {
                                   "orderId": "%s"
                                 }
-                                """.formatted(orderId)))
+                                """.formatted(orderId))
                         .with(ApiTestSupport.jwtWithScopes("payment:write")))
                 .andExpectAll(jsonPath("$.correlationId", is(correlationIdValue)));
 

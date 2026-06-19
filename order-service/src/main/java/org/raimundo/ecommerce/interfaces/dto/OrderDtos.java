@@ -20,11 +20,16 @@ public final class OrderDtos {
     }
 
     public record OrderResponse(UUID id, String customerId, String status, List<OrderItemResponse> items,
-                                BigDecimal totalAmount, String currency, int paymentRejectionCount) {
+                                BigDecimal totalAmount, String currency, int paymentRejectionCount,
+                                String correlationId) {
         public static OrderResponse from(Order order) {
+            return from(order, null);
+        }
+
+        public static OrderResponse from(Order order, String correlationId) {
             return new OrderResponse(order.id(), order.customerId(), order.status().name(),
                     order.items().stream().map(OrderItemResponse::from).toList(),
-                    order.total().amount(), order.total().currency(), order.paymentRejectionCount());
+                    order.total().amount(), order.total().currency(), order.paymentRejectionCount(), correlationId);
         }
     }
 
